@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stone Tank Studio — โปรแกรมสร้างลายหิน 3 มิติ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Taviraj:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3ecdf;
+    --paper-2: #eadfc9;
+    --ink: #2c241c;
+    --ink-soft: #746a5c;
+    --clay: #b35a3e;
+    --clay-dark: #8c4530;
+    --gold: #c69a53;
+    --sage: #767f61;
+    --line: #ddcfb2;
+    --card: #fbf7ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(198,154,83,0.10), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(179,90,62,0.08), transparent 45%);
+    color: var(--ink);
+    margin: 0;
+    padding: 28px 20px 60px;
+    min-height: 100vh;
+  }
+  .app { max-width: 940px; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: 'Sarabun', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase; color: var(--clay);
+    margin-bottom: 6px; display: block;
+  }
+  h1 {
+    font-family: 'Taviraj', serif; font-weight: 600;
+    font-size: 30px; color: var(--ink); margin: 0 0 6px;
+    letter-spacing: 0.2px;
+  }
+  h1 .accent { color: var(--clay); }
+  p.desc { color: var(--ink-soft); margin: 0 0 22px; font-size: 15px; }
+
+  .steps { display: flex; gap: 8px; margin-bottom: 20px; }
+  .step-btn {
+    flex: 1; padding: 13px 10px; text-align: center; border-radius: 10px 10px 4px 4px;
+    background: var(--paper-2); border: 1px solid var(--line); color: var(--ink-soft);
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Taviraj', serif;
+    transition: all .2s ease;
+  }
+  .step-btn .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--ink-soft); color: #fff; font-size: 11px; margin-right: 6px;
+    font-family: 'Sarabun', sans-serif; font-weight: 700;
+  }
+  .step-btn.active {
+    background: var(--card); color: var(--clay-dark);
+    border-color: var(--clay); box-shadow: 0 4px 0 -2px var(--clay);
+    transform: translateY(-2px);
+  }
+  .step-btn.active .num { background: var(--clay); }
+
+  .panel {
+    display: none; background: var(--card); border-radius: 4px 16px 16px 16px;
+    padding: 26px; border: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(44,36,28,0.06);
+  }
+  .panel.active { display: block; }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .row label { font-size: 14px; color: var(--ink-soft); }
+  input[type=color] { width: 44px; height: 34px; border: none; border-radius: 6px; cursor: pointer; background: none; border: 1px solid var(--line); }
+  input[type=file] { color: var(--ink-soft); font-size: 13px; font-family: 'Sarabun', sans-serif; }
+
+  button {
+    background: var(--clay); color: #fff8ef; border: none;
+    padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600;
+    font-family: 'Taviraj', serif;
+    box-shadow: 0 3px 0 var(--clay-dark);
+    transition: transform .12s ease;
+  }
+  button:hover { transform: translateY(-1px); }
+  button:active { transform: translateY(1px); box-shadow: 0 2px 0 var(--clay-dark); }
+  button.secondary {
+    background: transparent; color: var(--ink-soft); box-shadow: none; border: 1px solid var(--line);
+  }
+  button.secondary:hover { border-color: var(--clay); color: var(--clay-dark); }
+
+  .color-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 8px;
+  }
+  .swatch {
+    width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line), 0 2px 4px rgba(0,0,0,.15);
+  }
+  .color-item input[type=range] { flex: 1; accent-color: var(--clay); }
+  .pct-label { width: 56px; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--ink); font-weight: 700; font-family: 'Taviraj', serif; }
+  .remove-btn { background: none; border: none; color: #b56a5c; font-size: 18px; cursor: pointer; padding: 0 4px; }
+
+  .total-line { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); }
+  .total-line span { font-weight: 700; color: var(--clay-dark); font-family: 'Taviraj', serif; }
+
+  .prop-bar {
+    display: flex; width: 100%; height: 44px; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); margin: 18px 0;
+  }
+  .prop-seg {
+    display: flex; align-items: center; justify-content: center; font-size: 11.5px; color: #fff;
+    font-family: 'Taviraj', serif; font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,.4); transition: width .25s ease; white-space: nowrap; overflow: hidden;
+    border-right: 1px solid rgba(255,255,255,0.35);
+  }
+  .prop-seg:last-child { border-right: none; }
+
+  /* --- stone sample tile preview --- */
+  .sample-wrap {
+    display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    padding: 22px; margin-top: 10px;
+  }
+  .sample-tile-frame {
+    width: 200px; height: 200px; border-radius: 14px; flex-shrink: 0;
+    padding: 8px; background: linear-gradient(145deg, #fffdf8, #e7dcc4);
+    box-shadow: 0 8px 20px rgba(44,36,28,0.18), inset 0 1px 2px rgba(255,255,255,0.8);
+  }
+  #stonePreviewCanvas {
+    width: 100%; height: 100%; border-radius: 8px; display: block;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .sample-meta { flex: 1; min-width: 180px; }
+  .sample-meta .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--gold); background: rgba(198,154,83,0.14);
+    padding: 4px 10px; border-radius: 20px; margin-bottom: 8px;
+  }
+  .sample-meta h3 { font-family: 'Taviraj', serif; font-size: 18px; margin: 0 0 6px; color: var(--ink); }
+  .sample-meta p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+
+  /* --- tank preview (2D canvas + reference photo) --- */
+  .tank-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .tank-visual {
+    display: flex; gap: 20px; align-items: flex-start; justify-content: center;
+    flex-wrap: wrap; width: 100%;
+  }
+  .tank-photo-card {
+    width: 180px; border-radius: 14px; overflow: hidden; flex-shrink: 0;
+    background: var(--paper); border: 1px solid var(--line);
+    box-shadow: 0 8px 20px rgba(44,36,28,0.12);
+  }
+  .tank-photo-card img { width: 100%; display: block; height: 220px; object-fit: cover; }
+  .tank-photo-caption {
+    font-size: 10.5px; color: var(--ink-soft); padding: 8px 10px; line-height: 1.4;
+  }
+  .tank-photo-caption a { color: var(--clay-dark); text-decoration: none; }
+  .tank-canvas-frame {
+    padding: 14px; border-radius: 16px; flex-shrink: 0;
+    background: linear-gradient(145deg, #fffdf8, #e7dcc4);
+    box-shadow: 0 10px 26px rgba(44,36,28,0.16), inset 0 1px 2px rgba(255,255,255,0.8);
+  }
+  #tankCanvas { display: block; border-radius: 8px; }
+  .tank-plate {
+    display: flex; gap: 22px; flex-wrap: wrap; justify-content: center;
+    font-family: 'Sarabun', sans-serif; font-size: 12.5px; color: var(--ink-soft);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 18px;
+  }
+  .tank-plate b { color: var(--clay-dark); font-family: 'Taviraj', serif; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .hint { font-size: 12.5px; color: var(--ink-soft); text-align: center; max-width: 460px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <span class="eyebrow">Stone Tank Studio</span>
+  <h1>โปรแกรมสร้างลายหิน<span class="accent">สามมิติ</span></h1>
+  <p class="desc">เลือกสี &rarr; ดูสัดส่วน + ตัวอย่างลายหินเทอราซโซ่ &rarr; เทสีลงถังน้ำ 2000 ลิตร</p>
+
+  <div class="steps">
+    <div class="step-btn active" data-step="1"><span class="num">1</span>เลือกสี</div>
+    <div class="step-btn" data-step="2"><span class="num">2</span>สัดส่วน &amp; ตัวอย่างลาย</div>
+    <div class="step-btn" data-step="3"><span class="num">3</span>เทสีลงถังน้ำ</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel active" id="panel-1">
+    <div class="row">
+      <label>ดึงสีจากรูปภาพ:</label>
+      <input type="file" id="imgUpload" accept="image/*">
+    </div>
+    <div class="row">
+      <label>หรือเพิ่มสีเอง:</label>
+      <input type="color" id="colorPicker" value="#a9714f">
+      <button onclick="addManualColor()">+ เพิ่มสี</button>
+      <button class="secondary" onclick="resetColors()">ล้างทั้งหมด</button>
+    </div>
+    <div id="colorList"></div>
+    <div class="total-line">รวมสัดส่วนทั้งหมด: <span id="totalPct">100.0%</span></div>
+    <div class="row" style="margin-top:18px;">
+      <button onclick="goStep(2)">ถัดไป: ดูสัดส่วน &amp; ตัวอย่างลาย &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="panel" id="panel-2">
+    <p style="font-size:14px;color:var(--ink-soft);margin-top:0;">ปรับสัดส่วนสีได้ที่นี่ (ระบบคำนวณให้รวม 100% เสมอ)</p>
+    <div id="colorListStep2"></div>
+    <div class="prop-bar" id="propBar"></div>
+
+    <div class="sample-wrap">
+      <div class="sample-tile-frame">
+        <canvas id="stonePreviewCanvas" width="640" height="640"></canvas>
+      </div>
+      <div class="sample-meta">
+        <span class="tag">Live Preview</span>
+        <h3>ตัวอย่างแผ่นหินเทอราซโซ่</h3>
+        <p>เศษหินทุกก้อนมีขนาดเท่ากัน เรียงตัวแบบสุ่มบนตารางเพื่อความสม่ำเสมอ คำนวณจากสัดส่วนสีจริงแบบเรียลไทม์ — ลากสไลเดอร์ด้านบนแล้วดูลายเปลี่ยนทันที</p>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px;">
+      <button class="secondary" onclick="goStep(1)">&larr; กลับไปเลือกสี</button>
+      <button onclick="goStep(3)">ถัดไป: เทสีลงถังน้ำ &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="panel" id="panel-3">
+    <div class="tank-wrap">
+      <div class="tank-visual">
+        <div class="tank-photo-card">
+          <img id="tankRefPhoto"
+               src="https://images.unsplash.com/photo-1764344815153-3a356c392561?auto=format&fit=crop&w=900&q=80"
+               alt="ภาพอ้างอิงถังน้ำจริง"
+               onerror="this.parentElement.style.display='none'">
+          <div class="tank-photo-caption">
+            ภาพอ้างอิง: ถังน้ำจริง — ภาพโดย
+            <a href="https://unsplash.com/@adhitya_2505" target="_blank" rel="noopener">Adhitya Sibikumar</a> บน Unsplash
+          </div>
+        </div>
+        <div class="tank-canvas-frame">
+          <canvas id="tankCanvas" width="300" height="420"></canvas>
+        </div>
+      </div>
+
+      <div class="tank-plate">
+        <span><b>ความจุ</b> 2,000 ลิตร</span>
+        <span><b>เส้นผ่านศูนย์กลาง</b> ~1.26 ม.</span>
+        <span><b>ความสูงรวม</b> ~1.9 ม.</span>
+        <span><b>วัสดุ</b> เทอราซโซ่ผสมสี</span>
+      </div>
+      <div class="actions">
+        <button onclick="drawTank()">สุ่มลายใหม่</button>
+        <button class="secondary" onclick="downloadTankImage()">ดาวน์โหลดรูป PNG</button>
+        <button class="secondary" onclick="goStep(2)">&larr; กลับไปปรับสัดส่วน</button>
+      </div>
+      <p class="hint">ภาพ Preview ถังน้ำด้านขวาวาดด้วย Canvas 2D ล้วน ไม่พึ่งไลบรารีภายนอก จึงเปิดใช้งานได้ในทุกเครื่อง/เบราว์เซอร์</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let colors = [
+  { id: uid(), hex: '#a9714f', pct: 34 },
+  { id: uid(), hex: '#4a4038', pct: 33 },
+  { id: uid(), hex: '#e9dcc0', pct: 33 }
+];
+
+function uid(){ return Date.now() + '-' + Math.random().toString(16).slice(2); }
+
+// ---------- STEP NAVIGATION ----------
+function goStep(n){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + n).classList.add('active');
+  document.querySelector('.step-btn[data-step="' + n + '"]').classList.add('active');
+  renderAll();
+  if (n === 3) setTimeout(drawTank, 30);
+}
+document.querySelectorAll('.step-btn').forEach(b => {
+  b.addEventListener('click', () => goStep(b.dataset.step));
+});
+
+// ---------- COLOR PROPORTION LOGIC (always sums to 100) ----------
+function setPct(id, newVal){
+  newVal = Math.max(0, Math.min(100, Number(newVal)));
+  const target = colors.find(c => c.id === id);
+  const others = colors.filter(c => c.id !== id);
+  const remaining = 100 - newVal;
+  if (others.length === 0){
+    target.pct = 100;
+  } else {
+    const oldOthersSum = others.reduce((s, c) => s + c.pct, 0);
+    if (oldOthersSum === 0){
+      const share = remaining / others.length;
+      others.forEach(c => c.pct = share);
+    } else {
+      others.forEach(c => c.pct = remaining * (c.pct / oldOthersSum));
+    }
+    target.pct = newVal;
+  }
+  renderAll();
+}
+
+function addColorObj(hex){
+  const id = uid();
+  if (colors.length === 0){
+    colors.push({ id, hex, pct: 100 });
+  } else {
+    colors.push({ id, hex, pct: 0 });
+    setPct(id, Math.max(10, 100 / (colors.length)));
+    return;
+  }
+  renderAll();
+}
+
+function addManualColor(){
+  const hex = document.getElementById('colorPicker').value;
+  addColorObj(hex);
+}
+
+function removeColor(id){
+  colors = colors.filter(c => c.id !== id);
+  if (colors.length > 0){
+    const sum = colors.reduce((s,c)=>s+c.pct,0);
+    if (sum > 0) colors.forEach(c => c.pct = c.pct * (100/sum));
+    else { const share = 100/colors.length; colors.forEach(c => c.pct = share); }
+  }
+  renderAll();
+}
+
+function resetColors(){
+  colors = [];
+  renderAll();
+}
+
+// ---------- RENDER UI ----------
+function renderColorList(containerId){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  colors.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'color-item';
+    row.innerHTML = `
+      <div class="swatch" style="background:${c.hex}"></div>
+      <input type="range" min="0" max="100" step="0.5" value="${c.pct}"
+             oninput="setPct('${c.id}', this.value)">
+      <div class="pct-label">${c.pct.toFixed(1)}%</div>
+      <button class="remove-btn" onclick="removeColor('${c.id}')">&times;</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function renderTotal(){
+  const total = colors.reduce((s,c) => s + c.pct, 0);
+  const totalEl = document.getElementById('totalPct');
+  if (totalEl) totalEl.textContent = total.toFixed(1) + '%';
+}
+
+function renderPropBar(){
+  const bar = document.getElementById('propBar');
+  bar.innerHTML = '';
+  colors.forEach(c => {
+    const seg = document.createElement('div');
+    seg.className = 'prop-seg';
+    seg.style.width = c.pct + '%';
+    seg.style.background = c.hex;
+    seg.textContent = c.pct >= 6 ? c.pct.toFixed(0) + '%' : '';
+    bar.appendChild(seg);
+  });
+}
+
+function renderAll(){
+  renderColorList('colorList');
+  renderColorList('colorListStep2');
+  renderTotal();
+  renderPropBar();
+  renderStonePreview();
+}
+
+// ---------- IMAGE COLOR EXTRACTION ----------
+document.getElementById('imgUpload').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      const palette = extractPalette(img, 5);
+      colors = palette.map(hex => ({ id: uid(), hex, pct: 100/palette.length }));
+      renderAll();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function extractPalette(img, n){
+  const c = document.createElement('canvas');
+  c.width = 80; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, 80, 80);
+  const data = ctx.getImageData(0, 0, 80, 80).data;
+  const map = {};
+  for (let i = 0; i < data.length; i += 4){
+    const r = Math.round(data[i] / 32) * 32;
+    const g = Math.round(data[i+1] / 32) * 32;
+    const b = Math.round(data[i+2] / 32) * 32;
+    const key = r + ',' + g + ',' + b;
+    map[key] = (map[key] || 0) + 1;
+  }
+  const sorted = Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0, n);
+  return sorted.map(([key]) => {
+    const [r,g,b] = key.split(',').map(Number);
+    return rgbToHex(r,g,b);
+  });
+}
+
+function rgbToHex(r,g,b){
+  return '#' + [r,g,b].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+}
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  return {
+    r: parseInt(hex.substring(0,2),16),
+    g: parseInt(hex.substring(2,4),16),
+    b: parseInt(hex.substring(4,6),16)
+  };
+}
+function hexWithAlpha(hex, alpha){
+  const {r,g,b} = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ---------- TERRAZZO STONE TEXTURE — UNIFORM CHIP SIZE, GRID + JITTER ----------
+function drawChip(ctx, cx, cy, r, hex){
+  const sides = 5 + Math.floor(Math.random()*3);
+  const pts = [];
+  for (let i=0;i<sides;i++){
+    const angle = (i/sides)*Math.PI*2 + Math.random()*0.3;
+    const rad = r * (0.82 + Math.random()*0.22);
+    pts.push([cx+Math.cos(angle)*rad, cy+Math.sin(angle)*rad]);
+  }
+  ctx.save();
+  ctx.translate(r*0.08, r*0.10);
+  ctx.beginPath();
+  pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(20,15,10,0.15)';
+  ctx.fill();
+  ctx.restore();
+
+  ctx.beginPath();
+  pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
+  ctx.closePath();
+  ctx.fillStyle = hex;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = Math.max(0.5, r*0.05);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.beginPath();
+  pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
+  ctx.closePath();
+  ctx.clip();
+  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.35, r*0.05, cx, cy, r*1.15);
+  grad.addColorStop(0, 'rgba(255,255,255,0.36)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.06)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(cx-r, cy-r, r*2, r*2);
+  ctx.restore();
+}
+
+function pickWeightedColor(list){
+  let rnd = Math.random() * 100;
+  let acc = 0;
+  for (const c of list){
+    acc += c.pct;
+    if (rnd <= acc) return c.hex;
+  }
+  return list[list.length-1].hex;
+}
+
+function createStoneCanvas(width, height, colorArr){
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  const list = (colorArr && colorArr.length) ? colorArr : [{hex:'#9c9184', pct:100}];
+  const unit = Math.min(width, height);
+
+  // cement / grout base
+  ctx.fillStyle = '#e7dfcd';
+  ctx.fillRect(0,0,width,height);
+  for (let i=0;i<Math.round(width*height/55);i++){
+    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,0.035)' : 'rgba(255,255,255,0.05)';
+    const s = 1+Math.random()*2;
+    ctx.fillRect(Math.random()*width, Math.random()*height, s, s);
+  }
+
+  // uniform-size chips on a jittered hex-ish grid
+  const r = unit * 0.052;              // fixed chip radius for ALL chips
+  const spacingX = r * 2.15;
+  const spacingY = r * 1.9;
+  let rowIndex = 0;
+  for (let y = -spacingY; y < height + spacingY; y += spacingY){
+    const xOffset = (rowIndex % 2 === 0) ? 0 : spacingX/2;
+    for (let x = -spacingX + xOffset; x < width + spacingX; x += spacingX){
+      const jitterX = (Math.random()*2-1) * r * 0.4;
+      const jitterY = (Math.random()*2-1) * r * 0.4;
+      const rr = r * (0.94 + Math.random()*0.12); // near-identical size, tiny natural variance
+      drawChip(ctx, x+jitterX, y+jitterY, rr, pickWeightedColor(list));
+    }
+    rowIndex++;
+  }
+
+  // hairline veining cracks
+  ctx.lineWidth = Math.max(0.6, unit*0.0022);
+  ctx.strokeStyle = 'rgba(50,40,30,0.10)';
+  for (let i=0;i<5;i++){
+    ctx.beginPath();
+    let x = Math.random()*width, y = Math.random()*height;
+    ctx.moveTo(x,y);
+    for (let s=0;s<4;s++){
+      x += (Math.random()*2-1)*unit*0.12;
+      y += (Math.random()*2-1)*unit*0.12;
+      ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  // fine sand speckle
+  for (let i=0;i<Math.round(width*height/42);i++){
+    const c = list[Math.floor(Math.random()*list.length)];
+    ctx.fillStyle = hexWithAlpha(c.hex, 0.10+Math.random()*0.12);
+    ctx.fillRect(Math.random()*width, Math.random()*height, 1, 1);
+  }
+
+  return canvas;
+}
+
+function renderStonePreview(){
+  const previewCanvas = document.getElementById('stonePreviewCanvas');
+  if (!previewCanvas) return;
+  const src = createStoneCanvas(640, 640, colors);
+  const ctx = previewCanvas.getContext('2d');
+  ctx.clearRect(0,0,640,640);
+  ctx.drawImage(src, 0, 0);
+}
+
+// ---------- 2D CANVAS WATER TANK ILLUSTRATION (no WebGL / no external libs) ----------
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawTank(){
+  const canvas = document.getElementById('tankCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2;
+  const bodyW = W*0.58;
+  const bodyX = cx - bodyW/2;
+  const domeTopY = H*0.09;
+  const domeH = bodyW*0.16;
+  const bodyTopY = domeTopY + domeH*0.65;
+  const bodyBottomY = H*0.72;
+  const bottomCapRy = bodyW*0.06;
+  const skirtY = bodyBottomY + bottomCapRy*0.5;
+  const skirtH = H*0.03;
+  const legBottomY = skirtY + skirtH + H*0.05;
+
+  // ground shadow (drawn first, behind tank)
+  const shadowGrad = ctx.createRadialGradient(cx, legBottomY+8, 6, cx, legBottomY+8, bodyW*0.75);
+  shadowGrad.addColorStop(0, 'rgba(40,30,20,0.28)');
+  shadowGrad.addColorStop(1, 'rgba(40,30,20,0)');
+  ctx.fillStyle = shadowGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, legBottomY+8, bodyW*0.72, bodyW*0.16, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // legs
+  ctx.fillStyle = '#4a4038';
+  [-bodyW*0.30, bodyW*0.30].forEach(off => {
+    ctx.beginPath();
+    ctx.moveTo(cx+off-7, skirtY+skirtH);
+    ctx.lineTo(cx+off+7, skirtY+skirtH);
+    ctx.lineTo(cx+off+4, legBottomY);
+    ctx.lineTo(cx+off-4, legBottomY);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // skirt band
+  ctx.fillStyle = '#574c40';
+  roundRectPath(ctx, cx-bodyW*0.42, skirtY, bodyW*0.84, skirtH, 4);
+  ctx.fill();
+
+  // ---- shared stone texture for whole tank shell ----
+  const stoneSrc = createStoneCanvas(420, 640, colors);
+  const boxX = bodyX, boxY = domeTopY - domeH*0.4, boxW = bodyW, boxH = (bodyBottomY+bottomCapRy) - boxY;
+
+  function paintStone(clipFn){
+    ctx.save();
+    clipFn();
+    ctx.drawImage(stoneSrc, 0, 0, stoneSrc.width, stoneSrc.height, boxX, boxY, boxW, boxH);
+    ctx.restore();
+  }
+
+  // bottom cap ellipse
+  paintStone(() => { ctx.beginPath(); ctx.ellipse(cx, bodyBottomY, bodyW/2, bottomCapRy, 0, 0, Math.PI*2); ctx.clip(); });
+  // body (rounded rect)
+  paintStone(() => { roundRectPath(ctx, bodyX, bodyTopY, bodyW, bodyBottomY-bodyTopY, 10); ctx.clip(); });
+  // dome (ellipse sitting on top of body)
+  paintStone(() => { ctx.beginPath(); ctx.ellipse(cx, bodyTopY, bodyW/2, domeH, 0, 0, Math.PI*2); ctx.clip(); });
+
+  // structural ridge rings on body
+  ctx.strokeStyle = 'rgba(40,30,20,0.22)';
+  ctx.lineWidth = 1.6;
+  [0.28, 0.55, 0.82].forEach(t => {
+    const y = bodyTopY + t*(bodyBottomY-bodyTopY);
+    ctx.beginPath();
+    ctx.ellipse(cx, y, bodyW/2*0.99, 4, 0, 0, Math.PI*2);
+    ctx.stroke();
+  });
+
+  // cylindrical shading (source-atop keeps it inside already-drawn tank pixels only)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, domeTopY-domeH-4, W, (legBottomY)-(domeTopY-domeH-4));
+  ctx.clip();
+  const shadeGrad = ctx.createLinearGradient(bodyX, 0, bodyX+bodyW, 0);
+  shadeGrad.addColorStop(0,    'rgba(0,0,0,0.30)');
+  shadeGrad.addColorStop(0.15, 'rgba(255,255,255,0.24)');
+  shadeGrad.addColorStop(0.5,  'rgba(255,255,255,0.02)');
+  shadeGrad.addColorStop(0.85, 'rgba(255,255,255,0.16)');
+  shadeGrad.addColorStop(1,    'rgba(0,0,0,0.28)');
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = shadeGrad;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+
+  // hatch (lid) on top of dome
+  const hatchY = domeTopY - domeH*0.15;
+  ctx.fillStyle = '#4a4038';
+  roundRectPath(ctx, cx-18, hatchY-10, 36, 14, 4);
+  ctx.fill();
+  ctx.fillStyle = '#c69a53';
+  ctx.beginPath();
+  ctx.ellipse(cx, hatchY-10, 18, 3, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, hatchY-16, 4, 0, Math.PI*2);
+  ctx.fill();
+
+  // spigot + valve
+  const spigotY = bodyTopY + (bodyBottomY-bodyTopY)*0.82;
+  ctx.fillStyle = '#c69a53';
+  ctx.fillRect(bodyX+bodyW-4, spigotY-3, 16, 6);
+  ctx.beginPath();
+  ctx.arc(bodyX+bodyW+16, spigotY, 6, 0, Math.PI*2);
+  ctx.fill();
+
+  // label plate
+  const labelW = bodyW*0.68, labelH = 46;
+  const labelX = cx-labelW/2, labelY = bodyTopY + (bodyBottomY-bodyTopY)*0.32;
+  ctx.fillStyle = 'rgba(245,238,222,0.94)';
+  roundRectPath(ctx, labelX, labelY, labelW, labelH, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(140,69,48,0.55)';
+  ctx.lineWidth = 1.6;
+  roundRectPath(ctx, labelX, labelY, labelW, labelH, 8);
+  ctx.stroke();
+  ctx.fillStyle = '#8c4530';
+  ctx.textAlign = 'center';
+  ctx.font = '700 20px Georgia, serif';
+  ctx.fillText('2000 L', cx, labelY+27);
+  ctx.font = '600 9px Georgia, serif';
+  ctx.fillStyle = '#4a4038';
+  ctx.fillText('STONE TANK', cx, labelY+40);
+}
+
+function downloadTankImage(){
+  const canvas = document.getElementById('tankCanvas');
+  const link = document.createElement('a');
+  link.download = 'stone-tank-preview.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+renderAll();
+</script>
+</body>
+</html>
